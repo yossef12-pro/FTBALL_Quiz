@@ -1,6 +1,5 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
-apply plugin: "expo-root-project"
-apply plugin: "com.facebook.react.rootproject"
+
 buildscript {
   repositories {
     google()
@@ -34,4 +33,5 @@ allprojects {
   }
 }
 
-
+apply plugin: "expo-root-project"
+apply plugin: "com.facebook.react.rootproject"

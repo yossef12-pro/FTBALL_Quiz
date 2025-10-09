@@ -2,8 +2,10 @@ import "./global.css"
 import { Stack, Tabs } from "expo-router";
 import AntDesign from '@expo/vector-icons/AntDesign';
 import React from "react";
+import { GameProvider } from "../Contexts/GameContext";
 export default function RootLayout() {
-  return <Stack>
+  return <GameProvider>
+  <Stack>
     <Stack.Screen
     name="index"
     options={{headerShown:false,title:"home"}}
@@ -18,4 +20,5 @@ export default function RootLayout() {
     />
     <AntDesign name="home" size={24} color="black" />
   </Stack>
+  </GameProvider>
 }

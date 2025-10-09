@@ -1,28 +1,51 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
-
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "../../firebaseConfig";
+import { useGame } from "../Contexts/GameContext";
 export default function Index() {
   const router = useRouter()
   const [inputValue,setInputvalue] = useState("")
-  const createGame = async () =>{
-        try{const docRef = await addDoc(collection(db,"rooms"),{
-          player: [inputValue],
-          createdAt: new Date()
-        })
-       console.log("Room created with ID: ", docRef.id);
+const [loading,setLoading] = useState(false)
+  const {createGame,error, setError,setPlayerNametwo,setPlayerName} = useGame()
 
-      // بعد ما الروم يتعمل → نروح لصفحة room ومعانا الاسم والـ roomId
-      router.push({
-        pathname: "/room",
-        params: { name: inputValue, roomId: docRef.id },
-      });
-    } catch (e) {
-      console.error("Error adding document: ", e);
-    }
-  };
+
+  const handleCreateGame = async () => {
+if (!inputValue.trim()) {
+    alert("Please enter your name first!");
+    return;
+  }
+
+    if (loading) return;
+  setLoading(true);
+  setPlayerName(inputValue)
+  await createGame(inputValue,  router);
+  
+    setLoading(false);
+    router.push({
+    pathname: "/room",
+    params: { name: inputValue ,},
+  });
+};
+
+
+
+
+const handleJoinGame = async () => {
+  if(error){
+    setError(false)
+  }
+  if (!inputValue.trim()) {
+    alert("Please enter your name first!");
+    return;
+  }
+  setPlayerNametwo(inputValue)
+  
+    router.push({
+    pathname: "/joinGame",
+    params: { name: inputValue ,},
+  });
+};
+
   return (
     <View className="w-full h-full bg-red-500 justify-center items-center">
       <Image source ={require("../../assets/background.jpg")} className="w-full h-full absolute"/>
@@ -39,15 +62,16 @@ onChangeText={setInputvalue}
 
       <View className="flex top-40">
       <TouchableOpacity className="w-80 h-20 bg-white rounded-2xl mb-10 flex items-center justify-center shadow-2xl shadow-black"
-      onPress={createGame}
+       
       >
-        <Text className="text-2xl font-bold">Create Game</Text>
+        <Text className="text-2xl font-bold" onPress={() => handleCreateGame()}>Create Game</Text>
       </TouchableOpacity>
       <TouchableOpacity className="w-80 h-20 bg-white rounded-2xl mb-10 flex items-center justify-center shadow-2xl shadow-black"
-      onPress={()=>router.push({pathname:"/joinGame", params :{name:inputValue}})}>
+      onPress={()=>handleJoinGame()}>
         <Text className="text-2xl font-bold">Join game</Text>
       </TouchableOpacity>
       </View>
     </View>
   );
 }
+
