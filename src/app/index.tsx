@@ -7,6 +7,7 @@ export default function Index() {
   const [inputValue,setInputvalue] = useState("")
 const [loading,setLoading] = useState(false)
   const {createGame,error, setError,setPlayerNametwo,setPlayerName} = useGame()
+  
 
 
   const handleCreateGame = async () => {

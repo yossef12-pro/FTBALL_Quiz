@@ -45,6 +45,7 @@ export const GameProvider = ({ children }: GameProviderProps) => {
   const [PlayerNametwo, setPlayerNametwo] = useState<any | null>(null);
   const [error, setError] = useState<any | null>(null);
   const [selectedGame, setSelectedGame] = useState<any | null>(null);
+
   
   
  const createGame = async (
@@ -74,9 +75,10 @@ const joinRoom = async (
     setError(updatedRoom.error);
     return updatedRoom; // لازم ترجع object فيه error
   }
-
+  
   setRoom(updatedRoom);
   setRoomCode(updatedRoom.roomCode);
+  setPlayerName(updatedRoom!.players[1])
   return updatedRoom; // object فيه بيانات الغرفة
 };
 const leaveRoom = async (playerName: string, room: string) => {

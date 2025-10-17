@@ -3,12 +3,21 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import React, { useEffect } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useGame } from "../Contexts/GameContext";
+import { useMenus } from "../Contexts/MenusContext";
 import { deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../Firebase/firebaseConfig';
+import { getRandomQuestion } from '../Firebase/games';
 export default function Room(){
+  
+  
   const router = useRouter()
    const { room, subscribeToRoom,selectedGame,setSelectedGame,startGame,playerName } = useGame();
+   const {startMenusGame,questions,randomQuestion} = useMenus()
+   const games = ["القوائم","المزاد","خمن الاعب"]
    const{leaveRoom,setRoom} = useGame()
+   const players = room.players
+   const roomId = room.roomId
+   
    const handleleaveRoom = async () => {
       const roomRef = doc(db, "rooms", room.roomId);
       if (room.players[0]===playerName) {
@@ -18,8 +27,11 @@ export default function Room(){
         return;
       }
       leaveRoom(playerName,room)
-   }
-   useEffect(() => {
+    }
+   
+   
+   
+    useEffect(() => {
     const backAction = () => {
       Alert.alert("تأكيد", "هل تريد مغادرة الغرفة؟", [
         { text: "إلغاء", style: "cancel" },
@@ -29,37 +41,40 @@ export default function Room(){
       ]);
       return true; // معناها "ما تخرجش تلقائي، أنا هتحكم في السلوك"
     };
-
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
       backAction
     );
-
     return () => backHandler.remove(); // ننضف عند الخروج من الصفحة
   }, []);
-   
+  
+  
    
    
    const handleStartGame = async () => {
-           startGame(selectedGame,room)
-          if( selectedGame==="القوائم") router.push({pathname: "/Game",})
-   }
-   useEffect(() => {
-    let unsubscribe: (() => void) | null = null;
 
-    if (room?.roomId) {
-      // @ts-ignore
-      unsubscribe = subscribeToRoom(room.roomId);
-    }
 
-    return () => {
-      if (unsubscribe) unsubscribe(); // نوقف الاستماع لما الصفحة تتقفل
-    };
-  }, [room?.roomId]);
-if (!room) {
+          if( selectedGame==="القوائم"){ 
+            startMenusGame(roomId,players,questions,randomQuestion!)
+          }}
    
-    return;
-  }
+ 
+         
+//           useEffect(() => {  
+//             let unsubscribe: (() => void) | null = null;
+//             if (room?.roomId) {
+//               // @ts-ignore
+//               unsubscribe = subscribeToRoom(room.roomId);
+//               router.push({pathname: "/Game",})
+//             }
+//     return () => {
+//       if (unsubscribe) unsubscribe(); // نوقف الاستماع لما الصفحة تتقفل
+//     };
+//   }, [room?.roomId]);
+// if (!room) { return; }
+
+
+
   return (
     <View className='w-full h-full justify-center items-center'>
         <Image source ={require("../../assets/background.jpg")} className="w-full h-full absolute"/>
@@ -85,16 +100,25 @@ if (!room) {
 
 
       <View className='flex flex-col justify-center items-center gap-10 '>
-        <Pressable className={`w-60 h-20 bg-yellow-500 border-white border-2 rounded-2xl justify-center items-center ${selectedGame === "القوائم" ? "w-60 h-20 bg-yellow-500 border-green-500 border-3 rounded-2xl justify-center items-center" : "w-60 h-20 bg-yellow-500 border-white border-2 rounded-2xl justify-center items-center"}`} onPress={() => setSelectedGame("القوائم")}>
-           <Text className='text-4xl font-bold'>القوائم</Text>
-        </Pressable>
-        <Pressable className={`w-60 h-20 bg-yellow-500 border-white border-2 rounded-2xl justify-center items-center ${selectedGame === "المزاد" ? "w-60 h-20 bg-yellow-500 border-green-500 border-3 rounded-2xl justify-center items-center" : "w-60 h-20 bg-yellow-500 border-white border-2 rounded-2xl justify-center items-center"}`} onPress={() => setSelectedGame("المزاد")}>
-           <Text className='text-4xl font-bold'>المزاد</Text>  
-        </Pressable>
-        <Pressable className={`w-60 h-20 bg-yellow-500 border-white border-2 rounded-2xl justify-center items-center ${selectedGame === "خمن الاعب" ? "w-60 h-20 bg-yellow-500 border-green-500 border-3 rounded-2xl justify-center items-center" : "w-60 h-20 bg-yellow-500 border-white border-2 rounded-2xl justify-center items-center"}`} onPress={() => setSelectedGame("خمن الاعب")}>
-           <Text className='text-4xl font-bold'>خمن الاعب</Text>
-        </Pressable>
+        <View className=" justify-center items-center gap-12 bg-gray-500/5 w-60 h-50">
+      {games.map((game) => {
+        const isSelected = selectedGame === game;
 
+        return (
+          <Pressable key={game} onPress={() => setSelectedGame(game)}
+            className={`rounded-2xl justify-center items-center h-20 w-[220px] 
+              ${isSelected 
+                ? "bg-yellow-400 border-[3px] border-black" 
+                : "bg-yellow-400/80 border border-white"
+              } 
+            `}
+          >
+
+              <Text className="text-4xl font-bold text-black">{game}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
 
 <View className='flex flex-row gap-10'>
         <TouchableOpacity className='w-28 h-20 bg-red-700 rounded-2xl border-2 border-white justify-center items-center' onPress={() => handleleaveRoom()}>

@@ -9,7 +9,7 @@ export const createGame = async (playerName) =>{
           players: [playerName],
           createdAt: new Date(),
           roomcode: roomCode,
-          statue: "waiting"
+          status: "waiting"
         })
        console.log("Room created with ID: ", docRef.id);
 return {

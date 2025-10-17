@@ -1,155 +1,93 @@
-import { View, Text, TextInput, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
-import React, { useState } from 'react'
-
+import React, { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View,Image } from 'react-native';
+import { useMenus } from '../Contexts/MenusContext';
+import { collection, query, where, getDoc, addDoc,doc, updateDoc, arrayUnion, onSnapshot,deleteDoc } from 'firebase/firestore';
+import { db } from '../Firebase/firebaseConfig.js';
+import { useGame } from '../Contexts/GameContext';
 const Game = () => {
-  // State for user's answer
-  const [answer, setAnswer] = useState('');
-  // State to track which positions have been correctly answered
-  const [correctAnswers, setCorrectAnswers] = useState(Array(10).fill(false));
-  // State to track the current position being attempted
-  const [currentPosition, setCurrentPosition] = useState(0);
+const {room,playerName} = useGame();
+const{randomQuestion,questionAnswers,checkAnswer,revealedAnswers,currentRoom,currentIndex} = useMenus()
+const players = room.players
+const [answer, setAnswer] = useState("");
+const roomId = room.roomId
+const currentPlayer = players[currentIndex]
 
-  // Function to check if the answer is correct
-  const checkAnswer = () => {
-    const formattedAnswer = answer.trim().toLowerCase();
-    const correctAnswer = topPlayers[currentPosition].toLowerCase();
-    
-    if (formattedAnswer === correctAnswer) {
-      // Create a new array with the current position marked as correct
-      const newCorrectAnswers = [...correctAnswers];
-      newCorrectAnswers[currentPosition] = true;
-      setCorrectAnswers(newCorrectAnswers);
-      
-      // Move to the next position if not at the end
-      if (currentPosition < 9) {
-        setCurrentPosition(currentPosition + 1);
-      }
-    }
-    
-    // Clear the input field
-    setAnswer('');
-  };
+const handleSubmit = async () => {
+  if (!answer.trim()) return;
+  console.log(playerName)
+  try {
+    await checkAnswer(roomId, players, answer,questionAnswers);
+    setAnswer("");
+  } catch (error) {
+    console.error("Error checking answer:", error);
+  }
+};
+
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Liverpool FC Legends Quiz</Text>
-      
-      <View style={styles.questionContainer}>
-        <Text style={styles.question}>
-          What are the best 10 Liverpool players in history?
-        </Text>
-        <Text style={styles.instruction}>
-          Enter player #{currentPosition + 1}:
-        </Text>
-      </View>
-      
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={answer}
-          onChangeText={setAnswer}
-          placeholder="Enter player name"
-          onSubmitEditing={checkAnswer}
-        />
-        <TouchableOpacity style={styles.button} onPress={checkAnswer}>
-          <Text style={styles.buttonText}>Submit</Text>
-        </TouchableOpacity>
-      </View>
-      
-      <ScrollView style={styles.leaderboard}>
-        {topPlayers.map((player, index) => (
-          <View 
-            key={index} 
-            style={[
-              styles.playerRow,
-              correctAnswers[index] && styles.correctAnswer
-            ]}
-          >
-            <Text style={styles.position}>{index + 1}</Text>
-            <Text style={styles.playerName}>
-              {correctAnswers[index] ? player : '???'}
-            </Text>
-          </View>
-        ))}
-      </ScrollView>
-    </View>
-  )
-}
+    <View className="flex-1 items-center justify-center relative">
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#f5f5f5',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginVertical: 20,
-    color: '#C8102E', // Liverpool red
-  },
-  questionContainer: {
-    marginBottom: 20,
-  },
-  question: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  instruction: {
-    fontSize: 16,
-    fontStyle: 'italic',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  input: {
-    flex: 1,
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    backgroundColor: 'white',
-  },
-  button: {
-    marginLeft: 10,
-    backgroundColor: '#C8102E', // Liverpool red
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  leaderboard: {
-    flex: 1,
-  },
-  playerRow: {
-    flexDirection: 'row',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    backgroundColor: 'white',
-    marginBottom: 5,
-    borderRadius: 8,
-  },
-  correctAnswer: {
-    backgroundColor: '#4CAF50', // Green for correct answers
-  },
-  position: {
-    width: 30,
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  playerName: {
-    flex: 1,
-    fontSize: 16,
-  },
-});
+      <Image
+        source={require("../../assets/background.jpg")}
+        className="w-full h-full absolute"
+        resizeMode="cover"
+      />
+
+
+      <View className="absolute inset-0 bg-black/50" />
+       
+
+      <View className="w-full max-w-md items-center gap-14">
+        <View className="w-full flex-row justify-between items-center mb-6 p-5">
+          <View className="items-center">
+            <Text className="text-white font-bold text-lg">{players[0]} </Text>
+            <Text className="text-yellow-400 font-semibold text-base">نقاط: 15</Text>
+          </View>
+
+          <View className="items-center bg-white/20 px-6 py-2 rounded-full border border-white/30">
+            <Text className="text-white text-xl font-bold">⏱️ 42</Text>
+          </View>
+
+          <View className="items-center">
+            <Text className="text-white font-bold text-lg">{players[1]}</Text>
+            <Text className="text-yellow-400 font-semibold text-base">نقاط: 20</Text>
+          </View>
+        </View>
+       <Text className='text-2xl font-bold text-white 'adjustsFontSizeToFit
+        numberOfLines={1}>    {randomQuestion as any}   </Text>
+
+        <View className="flex-row flex-wrap justify-between gap-4 mb-8 drop-shadow-2xl shadow-black">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <View
+              key={i}
+              className={`w-[48%] bg-white/15 rounded-xl border border-white/25 p-3 items-center justify-center ${revealedAnswers?.includes(questionAnswers?.[i].answer)?"bg-green-400 border-red-700 border-2":"bg-neutral-700"} `}
+            >
+              <Text className="text-white text-lg font-semibold  ">
+                        {questionAnswers?.[i]?.answer}   {questionAnswers?.[i]?.rank} 
+              </Text>
+            </View>
+          ))}
+        </View>
+
+
+        <View className="w-full flex-row items-center gap-3">
+          <TextInput
+            placeholder="اكتب إجابتك هنا..."
+            placeholderTextColor="#ccc"
+            className={`flex-1 bg-white/15 text-white px-4 py-3 rounded-xl border border-white/25`}
+            value={answer}
+            onChangeText={setAnswer}
+            editable= {playerName === players[currentIndex]}
+          />
+          <TouchableOpacity className="bg-blue-500 px-6 py-3 rounded-xl active:scale-95" onPress={handleSubmit}>
+            <Text className="text-white font-semibold text-base">إرسال</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+
 
 export default Game
