@@ -1,22 +1,10 @@
-import { collection, query, where, getDocs, addDoc,doc,getDoc, updateDoc, arrayUnion, onSnapshot,deleteDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc,doc,getDoc, updateDoc, arrayUnion, onSnapshot,deleteDoc,runTransaction } from 'firebase/firestore';
 import { db } from './firebaseConfig.js';
 import questions from "./questions.json" with { type: "json" };
-export const uploadQuestions= async() =>{
- const questionsRef = collection(db,"questions")
- for (const q of questions) {
-    await addDoc(questionsRef, q);
-  }
-};
-uploadQuestions();
 
 
 // GAME LOGIC
 
-
-let currentPlayerIndex = 0;
-let timer = null;
-let timeLeft = 60;
-let isAnswered = false;
 
 export const getRandomQuestion = (questions) => {
   const randomIndex = Math.floor(Math.random() * questions.length);
@@ -66,7 +54,7 @@ export const checkAnswer = async (roomId, playerId, answer, questionAnswers ) =>
     const correctAnswer = questionAnswers[foundIndex].answer
     
     await updateDoc(roomRef, {
-      points: {points},
+      players: [{ points: {points} }],
       revealedAnswers: arrayUnion(correctAnswer.trim().toLowerCase()),
       isAnswered: true,
       lastAnswer: {
@@ -91,15 +79,15 @@ export const checkAnswer = async (roomId, playerId, answer, questionAnswers ) =>
 
 export const switchTurn = async (roomId) => {
   const roomRef = doc(db, "rooms", roomId);
-  const roomSnap = await getDoc(roomRef);
-  if (!roomSnap.exists()) return;
 
-  const data = roomSnap.data();
-  const newIndex = data.currentPlayerIndex === 0 ? 1 : 0;
+  await runTransaction(db, async (transaction) => {
+    const roomSnap = await transaction.get(roomRef);
+    if (!roomSnap.exists()) return;
 
-  await updateDoc(roomRef, {
-    currentPlayerIndex: newIndex,
-    isAnswered: false,
+    const currentPlayerIndex = roomSnap.data().currentPlayerIndex ?? 0;
+    const newIndex = currentPlayerIndex === 0 ? 1 : 0;
+
+    transaction.update(roomRef, { currentPlayerIndex: newIndex, isAnswered: false });
   });
 };
 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import React, { createContext, useContext, useState, ReactNode, useEffect, useRef } from "react";
 import {
   getRandomQuestion as getRandomQuestionDB,
   startGame as startGameDB,
@@ -11,7 +11,7 @@ import { useGame } from "../Contexts/GameContext";
 import questions from "../Firebase/questions.json" with { type: "json" };
 import { collection, doc, getDocs, onSnapshot } from "firebase/firestore";
 import { db } from "../Firebase/firebaseConfig";
-
+import { router } from "expo-router";
 
 
 export interface Player {
@@ -65,7 +65,7 @@ interface MenusProviderProps {
 }
 
 export const MenusProvider: React.FC<MenusProviderProps> = ({ children }) => {
-const { room,setRoom, playerName, startGame } = useGame();
+const { room,setRoom, playerName, startGame,subscribeToRoom } = useGame();
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);
   useEffect(() => {if (room?.roomId) setCurrentRoom(room.roomId);}, [room]);
   
@@ -79,51 +79,51 @@ const [allQuestions, setAllQuestions] = useState<Question[]>([]);
 const [revealedAnswers, setRevealedAnswers] = useState<string[]>([]);
 const [points, setPoints] = useState<string[]>([]);
 const [currentIndex, setCurrentIndex] = useState<number>();
+const ingame = useRef <boolean>(false)
 
   // =========================
   // 🔥 Game logic wrappers
   // =========================
    useEffect(() => {
-    if (!currentRoom) return;
-   console.log("Current Room ID:", currentRoom);
-    const roomRef = doc(db, "rooms", currentRoom);
-    const unsub = onSnapshot(roomRef, (snapshot) => {
-      const data = snapshot.data();
-      if (data?.revealedAnswers) {
-        setRevealedAnswers(data.revealedAnswers);
-      }
-      if (data?.currentPlayerIndex !== undefined) {
-        setCurrentIndex(data.currentPlayerIndex);
-      }
-    });
+  if (!currentRoom) return;
 
-    return () => unsub();
-  }, [currentRoom]); 
+  // احفظ roomId محليًا عشان لو currentRoom اتغيّر تبقى الLogs واضحة
+  const rid = currentRoom;
+  console.log("Effect subscribe for", rid);
+
+  // نخزن الدالة في ref لنضمن الوصول إليها من cleanup
+  const unsubRef = { current: null as (() => void) | null };
   
-  
-  const fetchQuestions = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, "questions"));
-      const fetched = querySnapshot.docs.map(doc => doc.data() as Question);
-      setQuestionsList(fetched);
-      return fetched;
-    } catch (error) {
-      console.error("Error fetching questions:", error);
-      return [];
+  unsubRef.current = subscribeToRoom(rid, (data) => {
+    if (!data) return;
+    setRandomQuestion(data.currentQuestion)
+    setQuestionAnswers(data.currentQuestionAnswers)
+    setRevealedAnswers(data.revealedAnswers || []);
+    setCurrentIndex(data.currentPlayerIndex ?? 0);
+    if(data.status === "playing" && !ingame.current){
+      ingame.current = true
+       router.push({pathname: "/Game",})
+   }});
+
+  return () => {
+    console.log("Cleanup for", rid, "unsubRef:", unsubRef.current);
+    if (unsubRef.current && typeof unsubRef.current === "function") {
+      unsubRef.current();
+      unsubRef.current = null;
+    } else {
+      console.warn("No valid unsubscribe function for", rid);
     }
   };
+}, [currentRoom]);
 
-//   useEffect(() => {
-//   const loadQuestions = async () => {
-//     const q = await fetchQuestions();
-//     setAllQuestions(q); 
-//   };
-
-//   loadQuestions();
-// }, []);
+  
+  
+  useEffect(() => {
+  setAllQuestions(questions);
+}, []);
   
   const startMenusGame = async (room: string, players: Player[]) => {
-    
+    setIsGameActive(true);
   const fetchedQuestions = allQuestions;
   
  if (!allQuestions.length) {
@@ -138,7 +138,7 @@ const { randomQuestion, questionAnswers } = getRandomQuestionDB(fetchedQuestions
 await startGameDB(room, players, fetchedQuestions, randomQuestion,questionAnswers);
 setRandomQuestion(randomQuestion);
 setQuestionAnswers(questionAnswers);
-  setIsGameActive(true);
+  
 
   
 };

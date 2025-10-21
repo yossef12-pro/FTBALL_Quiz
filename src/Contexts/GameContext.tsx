@@ -27,7 +27,7 @@ type GameContextType = {
 
   leaveRoom: (playerName: string, room: any) => Promise<void>;
   joinRoom: (roomCode: number, playerName: any) => Promise<void>;
-  subscribeToRoom: (roomId: string) => void;
+  subscribeToRoom: (roomId: string, callback: (data: any) => void) => void;
   startGame: (selectedGame: string, roomId: string) => Promise<void>;
 };
 
@@ -86,10 +86,14 @@ const leaveRoom = async (playerName: string, room: string) => {
     setRoom(updatedRoom)
   };
 
-  const subscribeToRoom = (roomId: string) => {
+  const subscribeToRoom = (roomId: string, callback: (data: any) => void
+): (() => void) => {
     return listenToRoomInDB(roomId, (data: any) => {
       setRoom(data);
+      callback(data);
+      
     });
+    
   };
 
   const startGame = async (selectedGame: string, roomId: string) => {

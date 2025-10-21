@@ -56,22 +56,10 @@ export default function Room(){
 
           if( selectedGame==="القوائم"){ 
             startMenusGame(roomId,players,questions,randomQuestion!)
-          }}
-   
- 
-         
-//           useEffect(() => {  
-//             let unsubscribe: (() => void) | null = null;
-//             if (room?.roomId) {
-//               // @ts-ignore
-//               unsubscribe = subscribeToRoom(room.roomId);
-//               router.push({pathname: "/Game",})
-//             }
-//     return () => {
-//       if (unsubscribe) unsubscribe(); // نوقف الاستماع لما الصفحة تتقفل
-//     };
-//   }, [room?.roomId]);
-// if (!room) { return; }
+            
+          }}      
+
+if (!room) { return; }
 
 
 
@@ -82,18 +70,20 @@ export default function Room(){
         <View className='w-full bg-white h-fit'><Text className='text-4xl text-black text-center'> Room Code : {room.roomcode}</Text></View>
      <View  className='flex flex-row justify-center items-center gap-40 py-12'>
       {/* USER 1 */}
-      <View className=' justify-center items-center gap-4'>
-       <AntDesign name="user" size={54} color="yellow" />
-       <Text className='text-3xl text-white'> {room.players?.[1]}</Text>
-       </View>
-       {/* USER 1 */}
+{room.players?.[1] && (
+  <View className='justify-center items-center gap-4'>
+    <AntDesign name="user" size={54} color="yellow" />
+    <Text className='text-3xl text-white'>{room.players[1].name}</Text>
+  </View>
+)}
 
-      {/* USER 2 */}
-      <View className=' justify-center items-center gap-4'>
-       <AntDesign name="user" size={54} color="yellow" />
-       <Text className='text-3xl text-white'>{room.players?.[0]}</Text>
-       </View>
-       {/* USER 2 */}
+{/* USER 2 */}
+{room.players?.[0] && (
+  <View className='justify-center items-center gap-4'>
+    <AntDesign name="user" size={54} color="yellow" />
+    <Text className='text-3xl text-white'>{room.players[0].name}</Text>
+  </View>
+)}
      </View>
 
      <Text className='font-bold text-white text-6xl mb-20'>PICK A GAME</Text>

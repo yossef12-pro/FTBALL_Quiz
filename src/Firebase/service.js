@@ -6,7 +6,7 @@ export const createGame = async (playerName) =>{
     
     const roomCode =Math.floor(1000 + Math.random()*9000)
         try{const docRef = await addDoc(collection(db,"rooms"),{
-          players: [playerName],
+          players: [{id:"player 1",name: playerName , points: 0}],
           createdAt: new Date(),
           roomcode: roomCode,
           status: "waiting"
@@ -15,7 +15,7 @@ export const createGame = async (playerName) =>{
 return {
       roomId: docRef.id,
       roomcode: roomCode,
-      players: [playerName],
+      players: [{ id: "player1", name: playerName, points: 0 }],
       status: "waiting",
       host: playerName
     };
@@ -73,14 +73,17 @@ export const joinRoom = async (roomCode, playerNametwo) => {
   const roomRef = doc(db, "rooms", room.roomId);
   
   await updateDoc(roomRef, {
-    players: arrayUnion(playerNametwo)
+    players: arrayUnion({
+    id: "player 2",
+    name: playerNametwo,
+    points: 0 })
   });
   
   // 5. Return updated room data
   return {
     roomId: room.roomId,
     roomCode: room.roomcode,
-    players: [...room.players, playerNametwo]
+    players: [...room.players, { id: "player2", name: playerNametwo, points: 0 }]
   };
 };
 
@@ -91,6 +94,7 @@ export const listenToRoom = (roomId, callback) => {
   const roomRef = doc(db, "rooms", roomId);
   const unsubscribe = onSnapshot(roomRef, (docSnap) => {
     if (docSnap.exists()) {
+      
       callback({
         roomId: docSnap.id,
         ...docSnap.data()
